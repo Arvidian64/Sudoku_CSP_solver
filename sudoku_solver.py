@@ -1,5 +1,22 @@
 from text_parser import parse_sudoku
 import time
+import json
+
+
+#Exports CSPs as json for debugging
+def export_to_json(csp_instance, filename="/CSPs/sudoku_csp.json"):
+    # We must convert tuple keys to strings because JSON keys must be strings
+    data_to_export = {
+        "domains": {f"{r},{c}": dom for (r, c), dom in csp_instance.domains.items()},
+        "constraints": {f"{r},{c}": [f"{nr},{nc}" for (nr, nc) in neighbors]
+                        for (r, c), neighbors in csp_instance.constraints.items()}
+    }
+
+    with open(filename, "w") as f:
+        json.dump(data_to_export, f, indent=4)
+
+    print(f"Successfully exported CSP structure to {filename}")
+
 
 class SudokuCSP:
     def __init__(self, puzzle):
@@ -50,5 +67,6 @@ if __name__  == "__main__":
     for i in sudoku:
         print(sudoku[i])
         csp = SudokuCSP(sudoku[i])
+        export_to_json(csp, filename="CSPs/"+i[:-1]+".json")
         for var in csp.variables:
             print(csp.constraints[var])
