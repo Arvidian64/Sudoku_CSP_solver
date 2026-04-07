@@ -173,4 +173,4 @@ if __name__  == "__main__":
         else:
             print("Lösning saknas")
     it_took = time.time() - start_time
-    print("It took:\n"+str(it_took)+" seconds")
+    print("\nIt took:\n"+str(it_took)+" seconds")
