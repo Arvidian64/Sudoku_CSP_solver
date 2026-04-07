@@ -1,6 +1,7 @@
 from text_parser import parse_sudoku
 import time
 import json
+from collections import deque
 
 
 #Exports CSPs as json for debugging
@@ -62,11 +63,114 @@ class SudokuCSP:
 
         return neighbors
 
+#Kollar arc-consistency, återvänder False om den hittar en inconsistency
+def arc_consistency(csp):
+    queue = deque()
+    for var_i in csp.variables:
+        for var_j in csp.get_neighbors(var_i):
+            queue.append((var_i, var_j))
+
+    while queue:
+        (var_i, var_j) = queue.popleft()
+
+        # Kollar om vi kan ta bort från domänen var_i tillhör
+        if revise(csp, var_i, var_j):
+
+            # Om domänen är tom kan puzzlet vara olösbart
+            if len(csp.domains[var_i]) == 0:
+                print("Olösbart?")
+                return False
+
+            # Ifall domänen ändras lägger vi grannarna till var_i i kön
+            # (var_j exkluderad, då funktionen redan kollat den)
+            for var_k in csp.get_neighbors(var_i):
+                if var_k != var_j:
+                    queue.append((var_k, var_i))
+
+    return True
+
+# Returnerar True om vi ändrar domänen av var_i för att matcha begränsningarna av var_j
+def revise(csp, var_i, var_j):
+    revised = False
+
+    domain_i = csp.domains[var_i]
+    domain_j = csp.domains[var_j]
+
+    # We check each value in xi's domain
+    for value_i in list(domain_i):
+        # Constraint: xi != xj
+        # If there is no value in xj's domain that is different from value_i,
+        # then value_i is impossible.
+        if not any(value_j != value_i for value_j in domain_j):
+            domain_i.remove(value_i)
+            revised = True
+
+    return revised
+
+def recursive_backtracking_search(csp):
+    #Returnerar None om ingen lösning existerar
+    return backtrack(csp)
+
+def backtrack(csp):
+    # Kolla om assigneringen är komplett (alla domäner har bara ett värde)
+    if all(len(csp.domains[var]) == 1 for var in csp.variables):
+        return csp.domains
+
+    # Väljer
+    var = minimum_remaining_value(csp)
+
+    # Testar varje värde i domänen
+    for value in list(csp.domains[var]):
+        if is_consistent(csp, var, value):
+
+            original_domains = {v: list(d) for v, d in csp.domains.items()}
+
+            csp.domains[var] = [value]
+
+            result = backtrack(csp)
+            if result is not None:
+                return result
+
+            csp.domains = original_domains
+
+    return None
+
+def minimum_remaining_value(csp):
+    unassigned = [v for v in csp.variables if len(csp.domains[v]) > 1]
+    return min(unassigned, key=lambda v: len(csp.domains[v]))
+
+def is_consistent(csp, var, value):
+    # Kollar om assigneringen av ett värde bryter mot några constraints med dess grannar
+    for neighbor in csp.get_neighbors(var):
+        # Ifall grannen redan är assignerad och har samma värde så är det inkonsekvent
+        if len(csp.domains[neighbor]) == 1 and csp.domains[neighbor][0] == value:
+            return False
+    return True
+
 if __name__  == "__main__":
     sudoku = parse_sudoku()
+    start_time = time.time()
     for i in sudoku:
-        print(sudoku[i])
         csp = SudokuCSP(sudoku[i])
         export_to_json(csp, filename="CSPs/"+i[:-1]+".json")
-        for var in csp.variables:
-            print(csp.constraints[var])
+        # for var in csp.variables:
+        #     print(csp.constraints[var])
+        success = arc_consistency(csp)
+        if success:
+            export_to_json(csp, filename="AC-CSPs/"+i[:-1]+".json")
+
+        solution = recursive_backtracking_search(csp)
+
+        if solution:
+            print("Sudoku löst")
+            print(solution)
+            # for key, value in solution.items():
+            for row in range(9):
+                for column in range(9):
+                    tuple = (row, column)
+                    print(solution[tuple], end=" ")
+                print("")
+        else:
+            print("Lösning saknas")
+    it_took = time.time() - start_time
+    print("It took:\n"+str(it_took)+" seconds")
