@@ -1,7 +1,8 @@
-from text_parser import parse_sudoku
-import time
 import json
+import time
 from collections import deque
+
+from text_parser import parse_sudoku
 
 
 #Exports CSPs as json for debugging
@@ -135,6 +136,7 @@ def backtrack(csp):
 
     return None
 
+## Gamla MRV-funktionen
 # def minimum_remaining_value(csp):
 #     unassigned = [v for v in csp.variables if len(csp.domains[v]) > 1]
 #     return min(unassigned, key=lambda v: len(csp.domains[v]))
@@ -163,24 +165,53 @@ def is_consistent(csp, var, value):
             return False
     return True
 
-if __name__  == "__main__":
+def fast():
     sudoku = parse_sudoku()
     start_time = time.time()
+    results = []
     for i in sudoku:
         csp = SudokuCSP(sudoku[i])
-        export_to_json(csp, filename="CSPs/"+i[:-1]+".json")
+        original = dict(csp.domains)
+        success = arc_consistency(csp)
+
+        solution = recursive_backtracking_search(csp)
+
+        if solution:
+            results.append(csp.domains)
+
+    it_took = time.time() - start_time
+    for solution in results:
+        for row in range(9):
+            print(" ", end=" ")
+            for column in range(9):
+                tuple = (row, column)
+                print(solution[tuple][0], end="  ")
+            print("")
+        print("\n-----------------------------\n")
+    print("\nIt took:\n" + str(it_took) + " seconds")
+
+
+def visual():
+    from sudoku_visualizer import sudoku_visualizer
+
+    sudoku = parse_sudoku()
+    start_time = time.time()
+    results = []
+    for i in sudoku:
+        csp = SudokuCSP(sudoku[i])
+        original = dict(csp.domains)
+        export_to_json(csp, filename="CSPs/" + i[:-1] + ".json")
         # for var in csp.variables:
         #     print(csp.constraints[var])
         success = arc_consistency(csp)
         if success:
-            export_to_json(csp, filename="AC-CSPs/"+i[:-1]+".json")
+            export_to_json(csp, filename="AC-CSPs/" + i[:-1] + ".json")
 
         solution = recursive_backtracking_search(csp)
 
         if solution:
             print("Sudoku löst")
-            print(solution)
-            # for key, value in solution.items():
+            results.append((original, csp.domains))
             for row in range(9):
                 for column in range(9):
                     tuple = (row, column)
@@ -189,4 +220,11 @@ if __name__  == "__main__":
         else:
             print("Lösning saknas")
     it_took = time.time() - start_time
-    print("\nIt took:\n"+str(it_took)+" seconds")
+    print("\nIt took:\n" + str(it_took) + " seconds")
+
+    gallery = sudoku_visualizer(results)
+    gallery.run()
+
+if __name__  == "__main__":
+    fast()
+    # visual()
