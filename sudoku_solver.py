@@ -135,9 +135,25 @@ def backtrack(csp):
 
     return None
 
+# def minimum_remaining_value(csp):
+#     unassigned = [v for v in csp.variables if len(csp.domains[v]) > 1]
+#     return min(unassigned, key=lambda v: len(csp.domains[v]))
+
 def minimum_remaining_value(csp):
-    unassigned = [v for v in csp.variables if len(csp.domains[v]) > 1]
-    return min(unassigned, key=lambda v: len(csp.domains[v]))
+    best_var = None
+    smallest_size = 100
+
+    for var in csp.variables:
+        domain_size = len(csp.domains[var])
+        if domain_size > 1:
+            if domain_size < smallest_size:
+                smallest_size = domain_size
+                best_var = var
+
+                if smallest_size == 2:
+                    return best_var
+
+    return best_var
 
 def is_consistent(csp, var, value):
     # Kollar om assigneringen av ett värde bryter mot några constraints med dess grannar
