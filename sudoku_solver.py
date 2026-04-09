@@ -226,5 +226,5 @@ def visual():
     gallery.run()
 
 if __name__  == "__main__":
-    # fast()
-    visual()
+    fast()
+    # visual()
