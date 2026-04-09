@@ -1,5 +1,4 @@
 import pygame
-from sympy.polys import domains
 
 board_size = 400
 padding = 40
