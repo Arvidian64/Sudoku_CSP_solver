@@ -117,10 +117,10 @@ def backtrack(csp):
     if all(len(csp.domains[var]) == 1 for var in csp.variables):
         return csp.domains
 
-    # Väljer
+    # Väljer startplats i domänen
     var = minimum_remaining_value(csp)
 
-    # Testar varje värde i domänen
+    # Testar varje värde i den delen av domänen
     for value in list(csp.domains[var]):
         if is_consistent(csp, var, value):
 
@@ -171,8 +171,8 @@ def fast():
     results = []
     for i in sudoku:
         csp = SudokuCSP(sudoku[i])
-        original = dict(csp.domains)
-        success = arc_consistency(csp)
+
+        arc_consistency(csp)
 
         solution = recursive_backtracking_search(csp)
 
