@@ -199,7 +199,7 @@ def visual():
     results = []
     for i in sudoku:
         csp = SudokuCSP(sudoku[i])
-        original = dict(csp.domains)
+        original = {k: list(v) for k, v in csp.domains.items()}
         export_to_json(csp, filename="CSPs/" + i[:-1] + ".json")
         # for var in csp.variables:
         #     print(csp.constraints[var])
@@ -226,5 +226,5 @@ def visual():
     gallery.run()
 
 if __name__  == "__main__":
-    fast()
-    # visual()
+    # fast()
+    visual()
